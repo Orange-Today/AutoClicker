@@ -23,7 +23,7 @@
 ## 下载与编译
 
 ### 直接下载
-前往 [Releases](https://github.com/你的用户名/你的仓库名/releases) 页面下载已编译好的 `AutoClicker.exe`。
+前往 [Releases](https://github.com/Orange-Today/AutoClicker/releases) 页面下载已编译好的 `AutoClicker.exe`。
 
 ### 自行编译
 使用 MinGW 编译：
