@@ -126,10 +126,35 @@ void GetKeyNameByVK(UINT vk, char* out) {
     else if (vk == VK_MENU) strcpy(out, "Alt");
     else if (vk == VK_SHIFT) strcpy(out, "Shift");
     else if (vk == VK_LWIN) strcpy(out, "Win");
+    else if (vk == VK_CAPITAL) strcpy(out, "CapsLock");
+    else if (vk == VK_LEFT) strcpy(out, "Left");
+    else if (vk == VK_RIGHT) strcpy(out, "Right");
+    else if (vk == VK_UP) strcpy(out, "Up");
+    else if (vk == VK_DOWN) strcpy(out, "Down");
+    else if (vk == VK_APPS) strcpy(out, "Menu");
+    else if (vk == VK_NUMLOCK) strcpy(out, "NumLock");
+    else if (vk == VK_SCROLL) strcpy(out, "ScrollLock");
+    else if (vk == VK_NUMPAD0) strcpy(out, "Num0");
+    else if (vk == VK_NUMPAD1) strcpy(out, "Num1");
+    else if (vk == VK_NUMPAD2) strcpy(out, "Num2");
+    else if (vk == VK_NUMPAD3) strcpy(out, "Num3");
+    else if (vk == VK_NUMPAD4) strcpy(out, "Num4");
+    else if (vk == VK_NUMPAD5) strcpy(out, "Num5");
+    else if (vk == VK_NUMPAD6) strcpy(out, "Num6");
+    else if (vk == VK_NUMPAD7) strcpy(out, "Num7");
+    else if (vk == VK_NUMPAD8) strcpy(out, "Num8");
+    else if (vk == VK_NUMPAD9) strcpy(out, "Num9");
+    else if (vk == VK_DECIMAL) strcpy(out, "NumDel");
+    else if (vk == VK_DIVIDE) strcpy(out, "NumDiv");
+    else if (vk == VK_MULTIPLY) strcpy(out, "NumMul");
+    else if (vk == VK_SUBTRACT) strcpy(out, "NumSub");
+    else if (vk == VK_ADD) strcpy(out, "NumAdd");
+    else if (vk == 0xC0) strcpy(out, "`");
+    else if (vk == 0xDC) strcpy(out, "\\");
     else sprintf(out, "0x%02X", vk);
 }
 
-// 从字符串解析热键
+// 从字符串解析热键（支持直接写 ` 和 \）
 UINT ParseHotkeyFromString(const char* str) {
     char* endptr; long val = strtol(str, &endptr, 10);
     if (*endptr == '\0' && val >= 1 && val <= 255) return (UINT)val;
@@ -147,6 +172,14 @@ UINT ParseHotkeyFromString(const char* str) {
     if (stricmp(str, "Alt") == 0) return VK_MENU;
     if (stricmp(str, "Shift") == 0) return VK_SHIFT;
     if (stricmp(str, "Win") == 0) return VK_LWIN;
+    if (stricmp(str, "CapsLock") == 0) return VK_CAPITAL;
+    if (stricmp(str, "Left") == 0) return VK_LEFT;
+    if (stricmp(str, "Right") == 0) return VK_RIGHT;
+    if (stricmp(str, "Up") == 0) return VK_UP;
+    if (stricmp(str, "Down") == 0) return VK_DOWN;
+    if (stricmp(str, "Menu") == 0) return VK_APPS;
+    if (strcmp(str, "`") == 0) return 0xC0;
+    if (strcmp(str, "\\") == 0) return 0xDC;
     return VK_F4;
 }
 
@@ -189,13 +222,20 @@ void SaveDefaultConfig() {
     if (!f) return;
     fprintf(f, "# ========== 自动按键器配置 ==========\n");
     fprintf(f, "# 键盘开关键：Hotkey=键名\n");
-    fprintf(f, "# 支持的键名示例：F1-F12, A-Z, 0-9, Enter, Tab, Space, Esc, Backspace,\n");
-    fprintf(f, "#                Ctrl, Alt, Shift, Win, Delete, Insert, Home, End,\n");
-    fprintf(f, "#                PageUp, PageDown, PrintScreen, Pause, NumLock, ScrollLock,\n");
-    fprintf(f, "#                小键盘数字键：Num0-Num9\n");
+    fprintf(f, "# 支持的键名示例：\n");
+    fprintf(f, "#   字母数字：A-Z, 0-9\n");
+    fprintf(f, "#   功能键：F1-F12\n");
+    fprintf(f, "#   方向键：Left, Right, Up, Down\n");
+    fprintf(f, "#   控制键：Enter, Tab, Space, Esc, Backspace, CapsLock\n");
+    fprintf(f, "#   编辑键：Delete, Insert, Home, End, PageUp, PageDown\n");
+    fprintf(f, "#   特殊键：PrintScreen, Pause, NumLock, ScrollLock, Menu (右键菜单键)\n");
+    fprintf(f, "#   修饰键：Ctrl, Alt, Shift, Win, RCtrl, RAlt, RShift, RWin\n");
+    fprintf(f, "#   小键盘数字：Num0-Num9\n");
+    fprintf(f, "#   小键盘符号：NumDel(.), NumDiv(/), NumMul(*), NumSub(-), NumAdd(+)\n");
+    fprintf(f, "#   符号键：` (反引号), \\ (反斜杠) —— 直接写这些字符即可\n");
+    fprintf(f, "#   组合键示例：Ctrl+C, Alt+Tab, Win+R, Shift+1(输出!)\n");
     fprintf(f, "Hotkey=F6\n\n");
     fprintf(f, "# 键盘按键序列格式：按键名 延时(ms)\n");
-    fprintf(f, "# 支持单独按键或组合键（如 Ctrl+C, Alt+Tab, Win+R, Ctrl+Shift+Esc）\n");
     fprintf(f, "# ===================================\n");
     fprintf(f, "# 示例（可删除或修改）：\n");
     fprintf(f, "A 500\n");
@@ -203,6 +243,10 @@ void SaveDefaultConfig() {
     fprintf(f, "Ctrl+C 200\n");
     fprintf(f, "Delete 400\n");
     fprintf(f, "PrintScreen 100\n");
+    fprintf(f, "Left 50\n");
+    fprintf(f, "CapsLock 100\n");
+    fprintf(f, "` 100\n");
+    fprintf(f, "\\ 100\n");
     fprintf(f, "# ===================================\n\n");
     SaveMouseConfig(f);
     fclose(f);
@@ -309,8 +353,8 @@ void FreeKeyList() {
 
 WORD GetScanCode(WORD vk) { return MapVirtualKey(vk, 0); }
 
+// 发送组合键（支持完整键盘，包括 ` 和 \）
 void SendCombinedKey(const char* keySeq) {
-    // 原有代码不变，省略...
     INPUT inputs[4] = {0};
     int nInputs = 0;
     BOOL bCtrl = FALSE, bAlt = FALSE, bShift = FALSE, bWin = FALSE;
@@ -326,6 +370,7 @@ void SendCombinedKey(const char* keySeq) {
     }
     strncpy(mainKey, p, sizeof(mainKey)-1);
 
+    // 无主键 -> 单独发送修饰键
     if (strlen(mainKey) == 0) {
         if (bCtrl) {
             INPUT ip[2] = {0};
@@ -354,60 +399,100 @@ void SendCombinedKey(const char* keySeq) {
         return;
     }
 
+    // 转换主键
     WORD vk = 0;
-    if (strlen(mainKey) == 1 && isalpha(mainKey[0])) vk = VkKeyScanA(mainKey[0]) & 0xFF;
-    else if (strlen(mainKey) == 1 && isdigit(mainKey[0])) vk = mainKey[0];
-    else if (strcmp(mainKey, "Enter") == 0) vk = VK_RETURN;
-    else if (strcmp(mainKey, "Tab") == 0) vk = VK_TAB;
-    else if (strcmp(mainKey, "Space") == 0) vk = VK_SPACE;
-    else if (strcmp(mainKey, "Esc") == 0) vk = VK_ESCAPE;
-    else if (strcmp(mainKey, "Backspace") == 0) vk = VK_BACK;
-    else if (strcmp(mainKey, "Ctrl") == 0) vk = VK_CONTROL;
-    else if (strcmp(mainKey, "Alt") == 0) vk = VK_MENU;
-    else if (strcmp(mainKey, "Shift") == 0) vk = VK_SHIFT;
-    else if (strcmp(mainKey, "Win") == 0) vk = VK_LWIN;
-    else if (strcmp(mainKey, "Num0") == 0) vk = VK_NUMPAD0;
-    else if (strcmp(mainKey, "Num1") == 0) vk = VK_NUMPAD1;
-    else if (strcmp(mainKey, "Num2") == 0) vk = VK_NUMPAD2;
-    else if (strcmp(mainKey, "Num3") == 0) vk = VK_NUMPAD3;
-    else if (strcmp(mainKey, "Num4") == 0) vk = VK_NUMPAD4;
-    else if (strcmp(mainKey, "Num5") == 0) vk = VK_NUMPAD5;
-    else if (strcmp(mainKey, "Num6") == 0) vk = VK_NUMPAD6;
-    else if (strcmp(mainKey, "Num7") == 0) vk = VK_NUMPAD7;
-    else if (strcmp(mainKey, "Num8") == 0) vk = VK_NUMPAD8;
-    else if (strcmp(mainKey, "Num9") == 0) vk = VK_NUMPAD9;
-    else if (strcmp(mainKey, "Delete") == 0) vk = VK_DELETE;
-    else if (strcmp(mainKey, "Insert") == 0) vk = VK_INSERT;
-    else if (strcmp(mainKey, "Home") == 0) vk = VK_HOME;
-    else if (strcmp(mainKey, "End") == 0) vk = VK_END;
-    else if (strcmp(mainKey, "PageUp") == 0) vk = VK_PRIOR;
-    else if (strcmp(mainKey, "PageDown") == 0) vk = VK_NEXT;
-    else if (strcmp(mainKey, "PrintScreen") == 0) vk = VK_SNAPSHOT;
-    else if (strcmp(mainKey, "Pause") == 0) vk = VK_PAUSE;
-    else if (strcmp(mainKey, "NumLock") == 0) vk = VK_NUMLOCK;
-    else if (strcmp(mainKey, "ScrollLock") == 0) vk = VK_SCROLL;
-    else if (strncmp(mainKey, "F", 1) == 0) {
-        int num = atoi(mainKey + 1);
-        if (num >= 1 && num <= 12) vk = VK_F1 + (num - 1);
+    // 单字符处理（包括字母、数字、符号键）
+    if (strlen(mainKey) == 1) {
+        char c = mainKey[0];
+        if (c == '`') {
+            vk = 0xC0;
+        } else if (c == '\\') {
+            vk = 0xDC;
+        } else if (isalpha(c)) {
+            vk = VkKeyScanA(c) & 0xFF;
+        } else if (isdigit(c)) {
+            vk = c;
+        }
     }
+    // 多字符或字符串比较
+    if (vk == 0) {
+        if (strcmp(mainKey, "Enter") == 0) vk = VK_RETURN;
+        else if (strcmp(mainKey, "Tab") == 0) vk = VK_TAB;
+        else if (strcmp(mainKey, "Space") == 0) vk = VK_SPACE;
+        else if (strcmp(mainKey, "Esc") == 0) vk = VK_ESCAPE;
+        else if (strcmp(mainKey, "Backspace") == 0) vk = VK_BACK;
+        else if (strcmp(mainKey, "Ctrl") == 0) vk = VK_CONTROL;
+        else if (strcmp(mainKey, "Alt") == 0) vk = VK_MENU;
+        else if (strcmp(mainKey, "Shift") == 0) vk = VK_SHIFT;
+        else if (strcmp(mainKey, "Win") == 0) vk = VK_LWIN;
+        else if (strcmp(mainKey, "CapsLock") == 0) vk = VK_CAPITAL;
+        else if (strcmp(mainKey, "Left") == 0) vk = VK_LEFT;
+        else if (strcmp(mainKey, "Right") == 0) vk = VK_RIGHT;
+        else if (strcmp(mainKey, "Up") == 0) vk = VK_UP;
+        else if (strcmp(mainKey, "Down") == 0) vk = VK_DOWN;
+        else if (stricmp(mainKey, "Menu") == 0) {
+            // 菜单键单独处理：使用 keybd_event 更可靠
+            keybd_event(VK_APPS, 0, 0, 0);
+            keybd_event(VK_APPS, 0, KEYEVENTF_KEYUP, 0);
+            return;
+        }
+        else if (strcmp(mainKey, "Delete") == 0) vk = VK_DELETE;
+        else if (strcmp(mainKey, "Insert") == 0) vk = VK_INSERT;
+        else if (strcmp(mainKey, "Home") == 0) vk = VK_HOME;
+        else if (strcmp(mainKey, "End") == 0) vk = VK_END;
+        else if (strcmp(mainKey, "PageUp") == 0) vk = VK_PRIOR;
+        else if (strcmp(mainKey, "PageDown") == 0) vk = VK_NEXT;
+        else if (strcmp(mainKey, "PrintScreen") == 0) vk = VK_SNAPSHOT;
+        else if (strcmp(mainKey, "Pause") == 0) vk = VK_PAUSE;
+        else if (strcmp(mainKey, "NumLock") == 0) vk = VK_NUMLOCK;
+        else if (strcmp(mainKey, "ScrollLock") == 0) vk = VK_SCROLL;
+        else if (strcmp(mainKey, "Num0") == 0) vk = VK_NUMPAD0;
+        else if (strcmp(mainKey, "Num1") == 0) vk = VK_NUMPAD1;
+        else if (strcmp(mainKey, "Num2") == 0) vk = VK_NUMPAD2;
+        else if (strcmp(mainKey, "Num3") == 0) vk = VK_NUMPAD3;
+        else if (strcmp(mainKey, "Num4") == 0) vk = VK_NUMPAD4;
+        else if (strcmp(mainKey, "Num5") == 0) vk = VK_NUMPAD5;
+        else if (strcmp(mainKey, "Num6") == 0) vk = VK_NUMPAD6;
+        else if (strcmp(mainKey, "Num7") == 0) vk = VK_NUMPAD7;
+        else if (strcmp(mainKey, "Num8") == 0) vk = VK_NUMPAD8;
+        else if (strcmp(mainKey, "Num9") == 0) vk = VK_NUMPAD9;
+        else if (strcmp(mainKey, "NumDel") == 0) vk = VK_DECIMAL;
+        else if (strcmp(mainKey, "NumDiv") == 0) vk = VK_DIVIDE;
+        else if (strcmp(mainKey, "NumMul") == 0) vk = VK_MULTIPLY;
+        else if (strcmp(mainKey, "NumSub") == 0) vk = VK_SUBTRACT;
+        else if (strcmp(mainKey, "NumAdd") == 0) vk = VK_ADD;
+        else if (strncmp(mainKey, "F", 1) == 0) {
+            int num = atoi(mainKey + 1);
+            if (num >= 1 && num <= 12) vk = VK_F1 + (num - 1);
+        }
+        else if (strcmp(mainKey, "RWin") == 0) vk = VK_RWIN;
+        else if (strcmp(mainKey, "RCtrl") == 0) vk = VK_RCONTROL;
+        else if (strcmp(mainKey, "RShift") == 0) vk = VK_RSHIFT;
+        else if (strcmp(mainKey, "RAlt") == 0) vk = VK_RMENU;
+    }
+
     if (vk == 0) return;
 
     WORD scan = GetScanCode(vk);
+    // 按下修饰键
     if (bCtrl) { inputs[nInputs].type = INPUT_KEYBOARD; inputs[nInputs].ki.wVk = VK_CONTROL; inputs[nInputs].ki.wScan = GetScanCode(VK_CONTROL); nInputs++; }
     if (bAlt)  { inputs[nInputs].type = INPUT_KEYBOARD; inputs[nInputs].ki.wVk = VK_MENU; inputs[nInputs].ki.wScan = GetScanCode(VK_MENU); nInputs++; }
     if (bShift){ inputs[nInputs].type = INPUT_KEYBOARD; inputs[nInputs].ki.wVk = VK_SHIFT; inputs[nInputs].ki.wScan = GetScanCode(VK_SHIFT); nInputs++; }
     if (bWin)  { inputs[nInputs].type = INPUT_KEYBOARD; inputs[nInputs].ki.wVk = VK_LWIN; inputs[nInputs].ki.wScan = GetScanCode(VK_LWIN); nInputs++; }
 
+    // 按下主键（使用扫描码）
     inputs[nInputs].type = INPUT_KEYBOARD;
     inputs[nInputs].ki.wScan = scan;
     inputs[nInputs].ki.dwFlags = KEYEVENTF_SCANCODE;
     nInputs++;
 
+    // 弹起主键
     inputs[nInputs].type = INPUT_KEYBOARD;
     inputs[nInputs].ki.wScan = scan;
     inputs[nInputs].ki.dwFlags = KEYEVENTF_SCANCODE | KEYEVENTF_KEYUP;
     nInputs++;
 
+    // 弹起修饰键（逆序）
     if (bWin)  { inputs[nInputs].type = INPUT_KEYBOARD; inputs[nInputs].ki.wVk = VK_LWIN; inputs[nInputs].ki.wScan = GetScanCode(VK_LWIN); inputs[nInputs].ki.dwFlags = KEYEVENTF_KEYUP; nInputs++; }
     if (bShift){ inputs[nInputs].type = INPUT_KEYBOARD; inputs[nInputs].ki.wVk = VK_SHIFT; inputs[nInputs].ki.wScan = GetScanCode(VK_SHIFT); inputs[nInputs].ki.dwFlags = KEYEVENTF_KEYUP; nInputs++; }
     if (bAlt)  { inputs[nInputs].type = INPUT_KEYBOARD; inputs[nInputs].ki.wVk = VK_MENU; inputs[nInputs].ki.wScan = GetScanCode(VK_MENU); inputs[nInputs].ki.dwFlags = KEYEVENTF_KEYUP; nInputs++; }
