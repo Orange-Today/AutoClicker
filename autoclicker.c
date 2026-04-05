@@ -23,6 +23,7 @@
 #define ID_CHK_LOOP        1006
 #define ID_STATIC_HINT     1007
 #define ID_STATIC_HOTKEY   1008
+#define ID_STATIC_SIGNATURE  1009
 
 // 鼠标控件ID
 #define ID_COMBO_MOUSE_TYPE   2001
@@ -561,6 +562,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                                     385, 155, 200, 20, hwnd, (HMENU)ID_STATIC_MOUSE_HOTKEY, NULL, NULL);
 
             EnableWindow(GetDlgItem(hwnd, ID_BTN_STOP), FALSE);
+            // 签名：底部居中，灰色文字
+            CreateWindow("STATIC", "by 老坑同志",  WS_CHILD | WS_VISIBLE | SS_CENTER,
+                        200, 360, 200, 20, hwnd, (HMENU)ID_STATIC_SIGNATURE, GetModuleHandle(NULL), NULL);
             GetConfigPath();
             LoadConfig();
 
@@ -624,6 +628,18 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                     break;
             }
             break;
+        
+        case WM_CTLCOLORSTATIC:
+            {
+                HWND hStatic = (HWND)lParam;
+                if (GetDlgCtrlID(hStatic) == ID_STATIC_SIGNATURE) {
+                    SetTextColor((HDC)wParam, RGB(128, 128, 128)); // 灰色
+                    SetBkMode((HDC)wParam, TRANSPARENT);           // 背景透明
+                    return (LRESULT)GetStockObject(NULL_BRUSH);    // 返回透明画刷
+                }
+                break; // 其他静态控件使用默认颜色
+            }
+            
         case WM_DESTROY:
             OnStop();
             OnMouseStop();
@@ -647,6 +663,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     wc.hInstance = hInstance;
     wc.hbrBackground = (HBRUSH)(COLOR_WINDOW+1);
     wc.lpszClassName = "AutoClickerClass";
+    wc.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(1));
     RegisterClass(&wc);
 
     HWND hwnd = CreateWindow("AutoClickerClass", "自动按键器 - 键盘+鼠标连点",
