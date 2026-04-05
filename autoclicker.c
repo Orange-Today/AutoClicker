@@ -1,4 +1,5 @@
 /*
+ * Copyright (C) 2026 老坑同志
  * 自动按键器 - 游戏兼容版（键盘+鼠标连点）
  * 编译：gcc -static -mwindows -o AutoClicker.exe autoclicker.c -lcomctl32 -luser32 -lgdi32
  */
