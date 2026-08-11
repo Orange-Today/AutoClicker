@@ -233,7 +233,7 @@ void SaveDefaultConfig() {
     fprintf(f, "#   修饰键：Ctrl, Alt, Shift, Win, RCtrl, RAlt, RShift, RWin\n");
     fprintf(f, "#   小键盘数字：Num0-Num9\n");
     fprintf(f, "#   小键盘符号：NumDel(.), NumDiv(/), NumMul(*), NumSub(-), NumAdd(+)\n");
-    fprintf(f, "#   符号键：` (反引号), \\ (反斜杠) —— 直接写这些字符即可\n");
+    fprintf(f, "#   符号键：` (反引号), \\ (反斜杠), 以及 [ ] ; ' , . / 等 —— 直接写字符即可；! @ # 等需按Shift的符号会自动补Shift\n");
     fprintf(f, "#   组合键示例：Ctrl+C, Alt+Tab, Win+R, Shift+1(输出!)\n");
     fprintf(f, "Hotkey=F6\n\n");
     fprintf(f, "# 键盘按键序列格式：按键名 延时(ms)\n");
@@ -409,10 +409,16 @@ void SendCombinedKey(const char* keySeq) {
             vk = 0xC0;
         } else if (c == '\\') {
             vk = 0xDC;
-        } else if (isalpha(c)) {
-            vk = VkKeyScanA(c) & 0xFF;
-        } else if (isdigit(c)) {
-            vk = c;
+        } else if (isprint((unsigned char)c)) {
+            // 用 VkKeyScanA 转换任意可打印字符（[ ] ; ' , . / 等符号都能识别），
+            // 返回值低位是虚拟键码，高位表示是否需要按修饰键
+            SHORT ks = VkKeyScanA(c);
+            if (ks == -1) {
+                vk = 0;
+            } else {
+                vk = (WORD)(ks & 0xFF);
+                if (ks & 0x0100) bShift = TRUE;  // 该字符需要按住 Shift（如 ! @ # 及大写字母）
+            }
         }
     }
     // 多字符或字符串比较
