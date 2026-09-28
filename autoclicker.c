@@ -1,19 +1,21 @@
 /*
  * Copyright (C) 2026 老坑同志
  * 自动按键器 - 游戏兼容版（键盘+鼠标连点）
- * 编译：gcc -static -mwindows -o AutoClicker.exe autoclicker.c -lcomctl32 -luser32 -lgdi32
+ * 编译：gcc -static -mwindows -o AutoClicker.exe autoclicker.c -lcomctl32 -luser32 -lgdi32 -lwinmm
  */
 
 #define WINVER 0x0501
 #define _WIN32_WINNT 0x0501
 #include <windows.h>
 #include <commctrl.h>
+#include <mmsystem.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 
 #pragma comment(lib, "comctl32.lib")
+#pragma comment(lib, "winmm.lib")
 
 // 控件ID
 #define ID_LIST_BOX        1001
@@ -66,6 +68,10 @@ HWND     g_hBtnMouseStart = NULL;
 HWND     g_hBtnMouseStop = NULL;
 HWND     g_hStaticMouseHotkey = NULL;
 
+// 通知设置（1=开启，0=关闭）
+int      g_bNotifySound = 1;
+int      g_bNotifyFlash = 1;
+
 // 函数声明
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 void    LoadConfig();
@@ -75,6 +81,9 @@ void    FreeKeyList();
 void    EditConfigFile();
 void    OnStart();
 void    OnStop();
+void    NotifySound(DWORD dwType);
+void    NotifyFlashStart();
+void    NotifyFlashStop();
 void    RegisterHotKeyCtrl();
 void    UnregisterHotKeyCtrl();
 DWORD WINAPI ThreadProc(LPVOID);
@@ -249,6 +258,9 @@ void SaveDefaultConfig() {
     fprintf(f, "` 100\n");
     fprintf(f, "\\ 100\n");
     fprintf(f, "# ===================================\n\n");
+    fprintf(f, "# 通知设置：1=开启，0=关闭\n");
+    fprintf(f, "NotifySound=1\n");
+    fprintf(f, "NotifyFlash=1\n\n");
     SaveMouseConfig(f);
     fclose(f);
 }
@@ -277,6 +289,19 @@ void LoadConfig() {
             const char* keyStr = line + 7;
             while (isspace(*keyStr)) keyStr++;
             newHotKey = ParseHotkeyFromString(keyStr);
+            continue;
+        }
+        // 通知设置
+        if (strnicmp(line, "NotifySound=", 12) == 0) {
+            const char* valStr = line + 12;
+            while (isspace(*valStr)) valStr++;
+            g_bNotifySound = (atoi(valStr) != 0);
+            continue;
+        }
+        if (strnicmp(line, "NotifyFlash=", 12) == 0) {
+            const char* valStr = line + 12;
+            while (isspace(*valStr)) valStr++;
+            g_bNotifyFlash = (atoi(valStr) != 0);
             continue;
         }
         // 鼠标配置
@@ -508,6 +533,36 @@ void SendCombinedKey(const char* keySeq) {
     SendInput(nInputs, inputs, sizeof(INPUT));
 }
 
+// 声音提示（使用系统内置音效，受 NotifySound 开关控制）
+void NotifySound(DWORD dwType) {
+    if (g_bNotifySound) MessageBeep(dwType);
+}
+
+// 开始任务栏闪烁（持续闪烁直到用户点击窗口，受 NotifyFlash 开关控制）
+void NotifyFlashStart() {
+    FLASHWINFO fwi;
+    if (!g_bNotifyFlash) return;
+    if (!g_hMainWnd) return;
+    fwi.cbSize = sizeof(FLASHWINFO);
+    fwi.hwnd = g_hMainWnd;
+    fwi.dwFlags = FLASHW_TRAY | FLASHW_TIMERNOFG;
+    fwi.uCount = 0;
+    fwi.dwTimeout = 0;
+    FlashWindowEx(&fwi);
+}
+
+// 停止任务栏闪烁
+void NotifyFlashStop() {
+    FLASHWINFO fwi;
+    if (!g_hMainWnd) return;
+    fwi.cbSize = sizeof(FLASHWINFO);
+    fwi.hwnd = g_hMainWnd;
+    fwi.dwFlags = FLASHW_STOP;
+    fwi.uCount = 0;
+    fwi.dwTimeout = 0;
+    FlashWindowEx(&fwi);
+}
+
 DWORD WINAPI ThreadProc(LPVOID lpParam) {
     while (g_bRunning) {
         KeyItem* p = g_pHead;
@@ -531,12 +586,16 @@ void OnStart() {
     g_bRunning = TRUE;
     EnableWindow(GetDlgItem(g_hMainWnd, ID_BTN_START), FALSE);
     EnableWindow(GetDlgItem(g_hMainWnd, ID_BTN_STOP), TRUE);
+    NotifySound(MB_ICONINFORMATION);
+    NotifyFlashStart();
     g_hThread = CreateThread(NULL, 0, ThreadProc, NULL, 0, NULL);
 }
 
 void OnStop() {
     if (!g_bRunning) return;
     g_bRunning = FALSE;
+    NotifySound(MB_OK);
+    NotifyFlashStop();
     if (g_hThread) {
         WaitForSingleObject(g_hThread, 1000);
         CloseHandle(g_hThread);
@@ -572,12 +631,16 @@ void OnMouseStart() {
     g_bMouseRunning = TRUE;
     EnableWindow(g_hBtnMouseStart, FALSE);
     EnableWindow(g_hBtnMouseStop, TRUE);
+    NotifySound(MB_ICONINFORMATION);
+    NotifyFlashStart();
     g_hMouseThread = CreateThread(NULL, 0, MouseThreadProc, NULL, 0, NULL);
 }
 
 void OnMouseStop() {
     if (!g_bMouseRunning) return;
     g_bMouseRunning = FALSE;
+    NotifySound(MB_OK);
+    NotifyFlashStop();
     if (g_hMouseThread) {
         WaitForSingleObject(g_hMouseThread, 1000);
         CloseHandle(g_hMouseThread);
